@@ -152,6 +152,9 @@ function goHome() {
   height: 65%;
   margin-bottom: 0.5rem;
   box-sizing: border-box;
+  background-color: rgba(200, 200, 200, 0.85);
+  border-radius: 0;
+  padding: 0 0.8rem;
 }
 
 .row {
@@ -172,15 +175,12 @@ function goHome() {
 .row:nth-child(3n+1) .cell {
   border-top: 3px solid #333;
 }
-
 .row:nth-child(3n) .cell {
   border-bottom: 3px solid #333;
 }
-
 .cell:nth-child(3n+1) {
   border-left: 3px solid #333;
 }
-
 .cell:nth-child(3n) {
   border-right: 3px solid #333;
 }
@@ -193,6 +193,7 @@ input {
   outline: none;
   font-size: 2.5vmin;
   background-color: transparent;
+  color: #000;
 }
 
 .invalid-entry input {
