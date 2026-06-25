@@ -379,17 +379,19 @@ begin
     return;
   end if;
 
-  select * into v_item
-  from public.sudoku_shop_items
-  where id = p_item_id and active = true;
+  select item.* into v_item
+  from public.sudoku_shop_items as item
+  where item.id = p_item_id and item.active = true;
 
   if not found then
     raise exception 'This Sudoku store item is unavailable.' using errcode = '22023';
   end if;
 
   if exists (
-    select 1 from public.sudoku_user_inventory
-    where user_id = v_user_id and item_id = v_item.id
+    select 1
+    from public.sudoku_user_inventory as inventory
+    where inventory.user_id = v_user_id
+      and inventory.item_id = v_item.id
   ) then
     raise exception 'You already own this item.' using errcode = '23505';
   end if;
@@ -483,9 +485,9 @@ begin
     raise exception 'Authentication is required.' using errcode = '42501';
   end if;
 
-  select * into v_item
-  from public.sudoku_shop_items
-  where id = p_item_id and active = true;
+  select item.* into v_item
+  from public.sudoku_shop_items as item
+  where item.id = p_item_id and item.active = true;
 
   if not found then
     raise exception 'This Sudoku store item is unavailable.' using errcode = '22023';
@@ -496,15 +498,17 @@ begin
   end if;
 
   if not exists (
-    select 1 from public.sudoku_user_inventory
-    where user_id = v_user_id and item_id = v_item.id
+    select 1
+    from public.sudoku_user_inventory as inventory
+    where inventory.user_id = v_user_id
+      and inventory.item_id = v_item.id
   ) then
     raise exception 'You do not own this item.' using errcode = '42501';
   end if;
 
   insert into public.sudoku_equipped_items (user_id, equipment_slot, item_id, equipped_at)
   values (v_user_id, p_equipment_slot, v_item.id, v_equipped_at)
-  on conflict (user_id, equipment_slot) do update
+  on conflict on constraint sudoku_equipped_items_pkey do update
   set item_id = excluded.item_id,
       equipped_at = excluded.equipped_at;
 

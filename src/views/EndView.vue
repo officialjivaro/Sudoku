@@ -13,6 +13,8 @@
           :submitting="online.state.submitting"
           :message="onlineResultMessage"
           :error="online.state.submissionError"
+          :can-retry="Boolean(result.onlineRunToken)"
+          @retry="submitOnlineResult"
         />
       </WashiPanel>
 
@@ -86,9 +88,14 @@ onMounted(async () => {
     return
   }
 
+  await submitOnlineResult()
+})
+
+async function submitOnlineResult() {
+  if (!result.value || result.value.status !== 'completed' || !account.isAuthenticated.value) return
   const response = await online.submitResult(result.value, true)
   if (response) economy.applyServerReward(response)
-})
+}
 
 async function retryGame() {
   const mode = result.value.mode

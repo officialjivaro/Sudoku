@@ -12,25 +12,37 @@ const state = reactive({
   error: ''
 })
 
+let loadRevision = 0
+
 async function load(options = {}) {
-  state.mode = options.mode || state.mode
-  state.difficulty = options.difficulty || state.difficulty
-  state.dailyDate = options.dailyDate || getUtcDateKey()
+  const revision = ++loadRevision
+  const mode = options.mode || state.mode
+  const difficulty = options.difficulty || state.difficulty
+  const dailyDate = options.dailyDate || getUtcDateKey()
+  state.mode = mode
+  state.difficulty = difficulty
+  state.dailyDate = dailyDate
   state.loading = true
   state.error = ''
 
   try {
-    state.entries = await fetchSudokuLeaderboard({
-      mode: state.mode,
-      difficulty: state.difficulty,
-      dailyDate: state.dailyDate,
+    const entries = await fetchSudokuLeaderboard({
+      mode,
+      difficulty,
+      dailyDate,
       limit: 25
     })
+
+    if (revision !== loadRevision) return
+    state.entries = entries
   } catch (error) {
+    if (revision !== loadRevision) return
     state.entries = []
     state.error = error.message || 'The online rankings could not be loaded.'
   } finally {
-    state.loading = false
+    if (revision === loadRevision) {
+      state.loading = false
+    }
   }
 }
 
@@ -40,7 +52,9 @@ async function open(options = {}) {
 }
 
 function close() {
+  loadRevision += 1
   state.open = false
+  state.loading = false
   state.error = ''
 }
 

@@ -20,8 +20,10 @@ const state = reactive({
 
 let initializePromise = null
 let authSubscription = null
+let sessionRevision = 0
 
 function setSession(session) {
+  sessionRevision += 1
   state.session = session || null
   state.user = session?.user || null
 }
@@ -32,8 +34,16 @@ async function loadProfile() {
     return null
   }
 
-  state.profile = await fetchProfile(state.user.id)
-  return state.profile
+  const revision = sessionRevision
+  const userId = state.user.id
+  const profile = await fetchProfile(userId)
+
+  if (revision !== sessionRevision || state.user?.id !== userId) {
+    return null
+  }
+
+  state.profile = profile
+  return profile
 }
 
 async function handleSession(session) {
@@ -161,19 +171,30 @@ async function verifyOtp(emailValue, tokenValue) {
 async function saveDisplayName(value) {
   if (!state.user) return false
 
+  const userId = state.user.id
   state.loading = true
   state.error = ''
   state.message = ''
 
   try {
-    state.profile = await updateProfileDisplayName(state.user.id, value)
+    const profile = await updateProfileDisplayName(userId, value)
+
+    if (state.user?.id !== userId) {
+      return false
+    }
+
+    state.profile = profile
     state.message = 'Display name updated across Jivaro Games.'
     return true
   } catch (error) {
-    state.error = error.message || 'The display name could not be updated.'
+    if (state.user?.id === userId) {
+      state.error = error.message || 'The display name could not be updated.'
+    }
     return false
   } finally {
-    state.loading = false
+    if (state.user?.id === userId) {
+      state.loading = false
+    }
   }
 }
 

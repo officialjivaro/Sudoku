@@ -109,7 +109,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import {
   BACKGROUND_ASSETS,
   getCategoryLabel,
@@ -193,6 +193,8 @@ function buttonState(item) {
 
 async function handleItemAction(item) {
   if (!account.isAuthenticated.value && !store.isOwned(item.id)) {
+    store.close()
+    await nextTick()
     account.openModal()
     return
   }

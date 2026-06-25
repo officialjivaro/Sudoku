@@ -16,16 +16,50 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value))
 }
 
-function isValidData(value) {
+function isPlainObject(value) {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+}
+
+function isDateKey(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const date = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+}
+
+function isStoredResult(value) {
   return Boolean(
-    value &&
-    value.version === DATA_VERSION &&
-    Array.isArray(value.results) &&
-    value.dailyProgress &&
-    typeof value.dailyProgress === 'object' &&
-    value.dailyCompletions &&
-    typeof value.dailyCompletions === 'object'
+    isPlainObject(value) &&
+    typeof value.status === 'string' &&
+    typeof value.mode === 'string' &&
+    typeof value.difficulty === 'string' &&
+    Number.isFinite(Number(value.elapsedSeconds)) &&
+    Number(value.elapsedSeconds) >= 0
   )
+}
+
+function normalizeDateMap(value, validator = isPlainObject) {
+  if (!isPlainObject(value)) return {}
+
+  return Object.fromEntries(
+    Object.entries(value).filter(([dateKey, record]) => isDateKey(dateKey) && validator(record, dateKey))
+  )
+}
+
+function normalizeData(value) {
+  if (!isPlainObject(value) || value.version !== DATA_VERSION || !Array.isArray(value.results)) {
+    return createEmptyData()
+  }
+
+  return {
+    version: DATA_VERSION,
+    results: value.results.filter(isStoredResult).slice(-RESULT_LIMIT),
+    dailyProgress: normalizeDateMap(value.dailyProgress, (record, dateKey) =>
+      isPlainObject(record) && record.dailyDate === dateKey
+    ),
+    dailyCompletions: normalizeDateMap(value.dailyCompletions, (record, dateKey) =>
+      isStoredResult(record) && record.status === 'completed' && record.dailyDate === dateKey
+    )
+  }
 }
 
 function parseDateKey(dateKey) {
@@ -97,23 +131,32 @@ function createMemoryStorage() {
 }
 
 export function createLocalStoragePlayerRepository(storage = createMemoryStorage()) {
+  let memoryData = createEmptyData()
+
   function readData() {
     try {
       const raw = storage.getItem(STORAGE_KEY)
 
       if (!raw) {
-        return createEmptyData()
+        return clone(memoryData)
       }
 
-      const parsed = JSON.parse(raw)
-      return isValidData(parsed) ? parsed : createEmptyData()
+      const parsed = normalizeData(JSON.parse(raw))
+      memoryData = clone(parsed)
+      return parsed
     } catch {
-      return createEmptyData()
+      return clone(memoryData)
     }
   }
 
   function writeData(data) {
-    storage.setItem(STORAGE_KEY, JSON.stringify(data))
+    memoryData = clone(data)
+
+    try {
+      storage.setItem(STORAGE_KEY, JSON.stringify(data))
+    } catch {
+      return
+    }
   }
 
   function getResults() {
@@ -219,7 +262,13 @@ export function createLocalStoragePlayerRepository(storage = createMemoryStorage
   }
 
   function reset() {
-    storage.removeItem(STORAGE_KEY)
+    memoryData = createEmptyData()
+
+    try {
+      storage.removeItem(STORAGE_KEY)
+    } catch {
+      return
+    }
   }
 
   return {

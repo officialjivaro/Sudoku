@@ -30,6 +30,8 @@ const state = reactive({
   message: ''
 })
 
+let accountRevision = 0
+
 function normalizeRemoteItem(value) {
   const local = getStoreItem(value.id)
   return {
@@ -61,13 +63,18 @@ function applyCosmetics() {
 }
 
 async function handleAccount(user) {
-  state.userId = user?.id || null
+  const revision = ++accountRevision
+  const userId = user?.id || null
+  state.userId = userId
+  state.loading = false
+  state.actionItemId = ''
   state.error = ''
   state.message = ''
+  state.catalog = [...SUDOKU_STORE_ITEMS]
   state.ownedItemIds = [...defaultOwnedIds]
   state.equipped = { ...DEFAULT_EQUIPPED_ITEMS }
 
-  if (!state.userId || !isSupabaseConfigured) {
+  if (!userId || !isSupabaseConfigured) {
     applyCosmetics()
     return
   }
@@ -77,9 +84,11 @@ async function handleAccount(user) {
   try {
     const [catalog, inventory, equipment] = await Promise.all([
       fetchSudokuCatalog(),
-      fetchSudokuInventory(state.userId),
-      fetchSudokuEquipment(state.userId)
+      fetchSudokuInventory(userId),
+      fetchSudokuEquipment(userId)
     ])
+
+    if (revision !== accountRevision || state.userId !== userId) return
 
     if (catalog.length > 0) {
       state.catalog = catalog.map(normalizeRemoteItem)
@@ -96,10 +105,13 @@ async function handleAccount(user) {
       }
     }
   } catch (error) {
+    if (revision !== accountRevision || state.userId !== userId) return
     state.error = `${error.message || 'The Sudoku store could not be loaded.'} Local previews remain available.`
   } finally {
-    state.loading = false
-    applyCosmetics()
+    if (revision === accountRevision && state.userId === userId) {
+      state.loading = false
+      applyCosmetics()
+    }
   }
 }
 
@@ -126,19 +138,36 @@ async function purchase(itemId) {
     return true
   }
 
+  const revision = accountRevision
+  const userId = state.userId
   state.actionItemId = itemId
 
   try {
     const result = await purchaseSudokuItem(itemId, createId())
-    state.ownedItemIds = [...new Set([...state.ownedItemIds, itemId])]
+
+    if (revision !== accountRevision || state.userId !== userId) {
+      return false
+    }
+
+    const purchasedItemId = result?.itemId || result?.item_id || itemId
+
+    if (purchasedItemId !== itemId) {
+      throw new Error('The purchase response did not match the selected item.')
+    }
+
+    state.ownedItemIds = [...new Set([...state.ownedItemIds, purchasedItemId])]
     useEconomy().applyPurchaseResult(result)
     state.message = result?.inserted === false ? 'This purchase was already processed.' : 'Item purchased and added to your collection.'
     return true
   } catch (error) {
-    state.error = error.message || 'The purchase could not be completed.'
+    if (revision === accountRevision && state.userId === userId) {
+      state.error = error.message || 'The purchase could not be completed.'
+    }
     return false
   } finally {
-    state.actionItemId = ''
+    if (revision === accountRevision && state.userId === userId) {
+      state.actionItemId = ''
+    }
   }
 }
 
@@ -164,19 +193,30 @@ async function equip(itemId) {
     return true
   }
 
+  const revision = accountRevision
+  const userId = state.userId
   state.actionItemId = itemId
 
   try {
     await equipSudokuItem(itemId, item.slot)
+
+    if (revision !== accountRevision || state.userId !== userId) {
+      return false
+    }
+
     state.equipped[item.slot] = itemId
     applyCosmetics()
     state.message = `${item.name} equipped.`
     return true
   } catch (error) {
-    state.error = error.message || 'The item could not be equipped.'
+    if (revision === accountRevision && state.userId === userId) {
+      state.error = error.message || 'The item could not be equipped.'
+    }
     return false
   } finally {
-    state.actionItemId = ''
+    if (revision === accountRevision && state.userId === userId) {
+      state.actionItemId = ''
+    }
   }
 }
 

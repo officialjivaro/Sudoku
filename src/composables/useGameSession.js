@@ -71,6 +71,12 @@ function isNotesGrid(value) {
   return isGrid(value) && value.every(row => row.every(cell => Array.isArray(cell)))
 }
 
+function gridsMatch(first, second) {
+  return isGrid(first) && isGrid(second) && first.every((row, rowIndex) =>
+    row.every((value, columnIndex) => value === second[rowIndex][columnIndex])
+  )
+}
+
 function normalizeStartOptions(value) {
   if (typeof value === 'string') {
     if (GAME_MODES[value]) {
@@ -571,6 +577,10 @@ export function createGameSession(options = {}) {
     }
 
     if (onlineRun.puzzleId && state.puzzleId && onlineRun.puzzleId !== state.puzzleId) {
+      return false
+    }
+
+    if (onlineRun.puzzle && !gridsMatch(onlineRun.puzzle, state.puzzle)) {
       return false
     }
 

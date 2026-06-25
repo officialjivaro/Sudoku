@@ -148,6 +148,37 @@ async function beginGame() {
     const clientRunId = createId()
     online.clearResultStatus()
 
+    if (mode.value === 'daily') {
+      refreshStats()
+
+      if (stats.dailyProgress) {
+        const resumeResult = startGame({
+          mode: mode.value,
+          difficulty: selectedDifficulty,
+          dateKey: dailyDate
+        })
+
+        if (resumeResult?.resumed) {
+          if (account.isAuthenticated.value) {
+            const resumedOnlineRun = await online.prepareRun({
+              mode: mode.value,
+              difficulty: selectedDifficulty,
+              dailyDate,
+              clientRunId: game.clientRunId
+            }, true)
+
+            if (resumedOnlineRun) attachOnlineRun(resumedOnlineRun)
+          }
+
+          await router.push({
+            name: 'game',
+            query: { mode: mode.value, difficulty: selectedDifficulty }
+          })
+          return
+        }
+      }
+    }
+
     const onlineRun = await online.prepareRun({
       mode: mode.value,
       difficulty: selectedDifficulty,

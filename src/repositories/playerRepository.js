@@ -1,7 +1,13 @@
 import { createLocalStoragePlayerRepository } from './localStoragePlayerRepository.js'
 
 function getBrowserStorage() {
-  return typeof window !== 'undefined' && window.localStorage ? window.localStorage : undefined
+  if (typeof window === 'undefined') return undefined
+
+  try {
+    return window.localStorage || undefined
+  } catch {
+    return undefined
+  }
 }
 
 let activeRepository = createLocalStoragePlayerRepository(getBrowserStorage())

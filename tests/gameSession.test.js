@@ -164,3 +164,25 @@ test('verified online run metadata survives through completion', () => {
   assert.equal(session.game.lastResult.onlineVerified, true)
   assert.deepEqual(session.game.lastResult.finalEntries, session.game.solution)
 })
+
+test('online run attachment rejects a puzzle that does not match the active game', () => {
+  const session = createSession()
+  session.startGame({ mode: 'classic', difficulty: 'easy' })
+
+  const mismatchedPuzzle = clone(session.game.puzzle)
+  mismatchedPuzzle[0][0] = mismatchedPuzzle[0][0] === 0 ? 9 : 0
+
+  assert.equal(session.attachOnlineRun({
+    runToken: '22222222-2222-4222-8222-222222222222',
+    clientRunId: '11111111-1111-4111-8111-111111111111',
+    puzzle: mismatchedPuzzle
+  }), false)
+  assert.equal(session.game.onlineVerified, false)
+
+  assert.equal(session.attachOnlineRun({
+    runToken: '44444444-4444-4444-8444-444444444444',
+    clientRunId: '55555555-5555-4555-8555-555555555555',
+    puzzle: clone(session.game.puzzle)
+  }), true)
+  assert.equal(session.game.onlineVerified, true)
+})

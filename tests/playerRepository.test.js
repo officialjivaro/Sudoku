@@ -68,3 +68,32 @@ test('Daily streaks count consecutive UTC dates', () => {
   assert.equal(metadata.longestDailyStreak, 3)
   assert.equal(repository.getDailyCompletion('2026-06-24').dailyDate, '2026-06-24')
 })
+
+test('corrupt local data is ignored without breaking statistics', () => {
+  const storage = createFakeStorage()
+  storage.setItem('sudoku-player-v1', JSON.stringify({
+    version: 1,
+    results: [null, { status: 'completed', mode: 'classic', difficulty: 'easy', elapsedSeconds: 120 }],
+    dailyProgress: [],
+    dailyCompletions: { invalid: null }
+  }))
+  const repository = createLocalStoragePlayerRepository(storage)
+
+  assert.equal(repository.getStats().completed, 1)
+  assert.equal(repository.getDailyProgress('invalid'), null)
+})
+
+test('storage write failures fall back to in-memory progress for the session', () => {
+  const storage = {
+    getItem: () => null,
+    setItem: () => { throw new Error('Storage is blocked') },
+    removeItem: () => { throw new Error('Storage is blocked') }
+  }
+  const repository = createLocalStoragePlayerRepository(storage)
+  const progress = { version: 1, dailyDate: '2026-06-24', entries: [[1]] }
+
+  repository.saveDailyProgress('2026-06-24', progress)
+  assert.deepEqual(repository.getDailyProgress('2026-06-24'), progress)
+  repository.reset()
+  assert.equal(repository.getDailyProgress('2026-06-24'), null)
+})

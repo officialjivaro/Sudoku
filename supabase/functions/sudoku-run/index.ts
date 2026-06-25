@@ -61,7 +61,7 @@ async function startRun(admin: ReturnType<typeof createClient>, userId: string, 
 
   const { data: existing, error: existingError } = await admin
     .from('sudoku_run_sessions')
-    .select('id, run_token, client_run_id, mode, difficulty, puzzle_id, puzzle, daily_date, started_at, deadline_at, status')
+    .select('id, run_token, client_run_id, mode, difficulty, puzzle_id, puzzle, daily_date, started_at, deadline_at, expires_at, status')
     .eq('user_id', userId)
     .eq('client_run_id', clientRunId)
     .maybeSingle()
@@ -69,6 +69,18 @@ async function startRun(admin: ReturnType<typeof createClient>, userId: string, 
   if (existingError) throw existingError
 
   if (existing) {
+    const expired = new Date(existing.expires_at).getTime() < Date.now()
+    const sprintExpired = existing.mode === 'sprint' && existing.deadline_at && new Date(existing.deadline_at).getTime() < Date.now()
+
+    if (expired || sprintExpired) {
+      await admin.from('sudoku_run_sessions').update({ status: 'expired' }).eq('id', existing.id)
+      throw new Error('This verified Sudoku run has expired. Start a new game.')
+    }
+
+    if (existing.status !== 'active') {
+      throw new Error('This client run ID has already been used. Start a new game.')
+    }
+
     return {
       runId: existing.id,
       runToken: existing.run_token,
@@ -184,8 +196,12 @@ async function completeRun(admin: ReturnType<typeof createClient>, userId: strin
   }
 
   if (session.status !== 'active') throw new Error('This Sudoku run is no longer active.')
-  if (new Date(session.expires_at).getTime() < Date.now()) throw new Error('This Sudoku run has expired.')
+  if (new Date(session.expires_at).getTime() < Date.now()) {
+    await admin.from('sudoku_run_sessions').update({ status: 'expired' }).eq('id', session.id)
+    throw new Error('This Sudoku run has expired.')
+  }
   if (session.mode === 'sprint' && session.deadline_at && new Date(session.deadline_at).getTime() < Date.now()) {
+    await admin.from('sudoku_run_sessions').update({ status: 'expired' }).eq('id', session.id)
     throw new Error('The Sprint timer expired before completion.')
   }
   if (!isCompleteSolution(payload.entries, session.solution)) {

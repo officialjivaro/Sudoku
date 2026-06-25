@@ -19,17 +19,37 @@ function emptyGuestData() {
 }
 
 function readGuestData() {
+  if (typeof window === 'undefined') return emptyGuestData()
+
   try {
     const raw = window.sessionStorage.getItem(GUEST_STORAGE_KEY)
     if (!raw) return emptyGuestData()
     const value = JSON.parse(raw)
-    return value && typeof value === 'object' ? { ...emptyGuestData(), ...value } : emptyGuestData()
+
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return emptyGuestData()
+    }
+
+    return {
+      balance: Math.max(0, Number(value.balance) || 0),
+      rewardedEvents: Array.isArray(value.rewardedEvents)
+        ? value.rewardedEvents.filter(eventId => typeof eventId === 'string').slice(-100)
+        : [],
+      nonDailyRewards: value.nonDailyRewards && typeof value.nonDailyRewards === 'object' && !Array.isArray(value.nonDailyRewards)
+        ? { ...value.nonDailyRewards }
+        : {},
+      dailyRewards: value.dailyRewards && typeof value.dailyRewards === 'object' && !Array.isArray(value.dailyRewards)
+        ? { ...value.dailyRewards }
+        : {}
+    }
   } catch {
     return emptyGuestData()
   }
 }
 
 function writeGuestData(value) {
+  if (typeof window === 'undefined') return
+
   try {
     window.sessionStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(value))
   } catch {
@@ -46,13 +66,18 @@ const state = reactive({
   lastReward: null
 })
 
+let accountRevision = 0
+
 async function handleAccount(user) {
-  state.userId = user?.id || null
+  const revision = ++accountRevision
+  const userId = user?.id || null
+  state.userId = userId
+  state.wallet = null
+  state.loading = false
   state.error = ''
   state.lastReward = null
 
-  if (!state.userId) {
-    state.wallet = null
+  if (!userId) {
     state.guest = readGuestData()
     return
   }
@@ -60,27 +85,39 @@ async function handleAccount(user) {
   state.loading = true
 
   try {
-    state.wallet = await fetchQuantaWallet(state.userId)
+    const wallet = await fetchQuantaWallet(userId)
+
+    if (revision !== accountRevision || state.userId !== userId) return
+    state.wallet = wallet
   } catch (error) {
+    if (revision !== accountRevision || state.userId !== userId) return
     state.wallet = null
     state.error = error.message || 'Unable to load the Quanta wallet.'
   } finally {
-    state.loading = false
+    if (revision === accountRevision && state.userId === userId) {
+      state.loading = false
+    }
   }
 }
 
 async function refreshWallet() {
   if (!state.userId) return null
-  state.wallet = await fetchQuantaWallet(state.userId)
-  return state.wallet
+  const userId = state.userId
+  const wallet = await fetchQuantaWallet(userId)
+
+  if (state.userId !== userId) return null
+  state.wallet = wallet
+  return wallet
 }
 
 function applyServerReward(result) {
   const newBalance = Math.max(0, Number(result?.newBalance ?? result?.new_balance) || 0)
   const amount = Math.max(0, Number(result?.quantaAwarded ?? result?.quanta_awarded) || 0)
 
-  if (state.wallet) {
-    state.wallet = { ...state.wallet, balance: newBalance }
+  state.wallet = {
+    ...(state.wallet || {}),
+    user_id: state.wallet?.user_id || state.userId || '',
+    balance: newBalance
   }
 
   state.lastReward = {
@@ -98,7 +135,9 @@ function awardGuestResult(result) {
   }
 
   const eventId = String(result.clientRunId || result.id || '')
-  const dateKey = getUtcDateKey(new Date(result.completedAt || Date.now()))
+  const dateKey = result.mode === 'daily' && result.dailyDate
+    ? String(result.dailyDate)
+    : getUtcDateKey(new Date(result.completedAt || Date.now()))
   const guest = readGuestData()
 
   if (eventId && guest.rewardedEvents.includes(eventId)) {
@@ -143,8 +182,10 @@ function awardGuestResult(result) {
 function applyPurchaseResult(result) {
   const newBalance = Math.max(0, Number(result?.newBalance ?? result?.new_balance) || 0)
 
-  if (state.wallet) {
-    state.wallet = { ...state.wallet, balance: newBalance }
+  state.wallet = {
+    ...(state.wallet || {}),
+    user_id: state.wallet?.user_id || state.userId || '',
+    balance: newBalance
   }
 
   return state.wallet

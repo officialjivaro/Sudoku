@@ -18,7 +18,8 @@
       <strong v-if="rewardAmount > 0" class="online-result__reward">+{{ rewardAmount }} Quanta</strong>
     </div>
 
-    <AppButton v-if="!authenticated" size="small" @click="account.openModal">Sign In</AppButton>
+    <AppButton v-if="!authenticated" class="online-result__action" size="small" @click="account.openModal">Sign In</AppButton>
+    <AppButton v-else-if="error && canRetry" class="online-result__action" size="small" @click="emit('retry')">Retry Save</AppButton>
   </section>
 </template>
 
@@ -42,8 +43,14 @@ const props = defineProps({
   error: {
     type: String,
     default: ''
+  },
+  canRetry: {
+    type: Boolean,
+    default: false
   }
 })
+
+const emit = defineEmits(['retry'])
 
 const account = useOnlineAccount()
 const economy = useEconomy()
@@ -123,7 +130,7 @@ const statusLabel = computed(() => props.error ? 'Save failed' : props.submittin
     grid-template-columns: auto 1fr;
   }
 
-  .online-result > :last-child {
+  .online-result__action {
     grid-column: 1 / -1;
     justify-self: center;
   }

@@ -6,7 +6,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import StatusChip from '../ui/StatusChip.vue'
 import { formatTime } from '../../utils/formatTime.js'
 
@@ -41,6 +41,14 @@ const displaySeconds = computed(() => {
 
 const displayTime = computed(() => formatTime(displaySeconds.value))
 const isUrgent = computed(() => props.timerType === 'countdown' && displaySeconds.value <= 60)
+
+watch(
+  () => [props.timerType, props.startedAt, props.deadline],
+  () => {
+    expiredEmitted = false
+    updateClock()
+  }
+)
 
 function updateClock() {
   now.value = Date.now()
