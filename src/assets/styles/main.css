@@ -1,0 +1,379 @@
+/* Theme Tokens | Shared paper, ink, sakura, spacing, and motion values. */
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --font-display: Georgia, "Yu Mincho", "Hiragino Mincho ProN", serif;
+  --app-header-size: clamp(3.9rem, 7dvh, 5rem);
+  --page-gutter: clamp(0.45rem, 1.4vw, 1.1rem);
+  --color-ink: #282226;
+  --color-ink-soft: #51484d;
+  --color-ink-muted: #776c72;
+  --color-paper: #fffdf8;
+  --color-paper-soft: #fff8f8;
+  --color-paper-warm: #f8efe8;
+  --color-paper-deep: #eee0d6;
+  --color-sakura-50: #fff2f6;
+  --color-sakura-100: #fbdde5;
+  --color-sakura-200: #f2bdca;
+  --color-sakura-300: #e79daf;
+  --color-sakura-500: #b9657c;
+  --color-sakura-700: #7f3c51;
+  --color-gold: #c59236;
+  --color-gold-soft: #f8df9d;
+  --color-success: #376d52;
+  --color-danger: #9a3451;
+  --paper-border: rgba(75, 59, 67, 0.26);
+  --paper-border-strong: rgba(75, 59, 67, 0.48);
+  --paper-highlight: rgba(255, 255, 255, 0.86);
+  --radius-small: 0.48rem;
+  --radius-medium: 0.78rem;
+  --radius-large: 1.15rem;
+  --radius-xl: 1.65rem;
+  --shadow-soft: 0 0.35rem 1rem rgba(49, 37, 43, 0.14);
+  --shadow-panel: 0 0.8rem 2rem rgba(49, 37, 43, 0.22);
+  --shadow-lifted: 0 1.1rem 2.8rem rgba(43, 31, 37, 0.3);
+  --focus-ring: 0 0 0 3px rgba(255, 255, 255, 0.95), 0 0 0 6px rgba(185, 101, 124, 0.82);
+  --motion-fast: 130ms;
+  --motion-standard: 190ms;
+  --z-background: 0;
+  --z-content: 2;
+  --z-header: 20;
+  --z-modal: 80;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  min-inline-size: 20rem;
+  background: #fff8fa;
+  color: var(--color-ink);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+select,
+input[type='checkbox'],
+input[type='radio'] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+select,
+input {
+  outline-color: var(--color-sakura-500);
+}
+
+::selection {
+  background: var(--color-sakura-200);
+  color: var(--color-ink);
+}
+
+/* Accessibility | Keyboard access and visually hidden content. */
+.skip-link {
+  position: fixed;
+  z-index: 120;
+  inset-block-start: 0.45rem;
+  inset-inline-start: 50%;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-small);
+  background: var(--color-ink);
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  transform: translate(-50%, -160%);
+  transition: transform var(--motion-fast) ease;
+}
+
+.skip-link:focus {
+  transform: translate(-50%, 0);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  inline-size: 1px !important;
+  block-size: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Application Shell | Fixed utility header and no-scroll route stage. */
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: var(--app-header-size) minmax(0, 1fr);
+  inline-size: 100%;
+  block-size: 100vh;
+  block-size: 100dvh;
+  overflow: hidden;
+}
+
+.app-main {
+  position: relative;
+  z-index: var(--z-content);
+  min-inline-size: 0;
+  min-block-size: 0;
+  overflow: hidden;
+}
+
+.app-main:focus {
+  outline: 0;
+}
+
+.app-main > * {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.app-page {
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 0;
+  overflow: hidden;
+}
+
+/* Typography | Shared Japanese-minimalist hierarchy. */
+.display-title {
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: 0.055em;
+  -webkit-text-stroke: 1.5px rgba(27, 21, 24, 0.98);
+  text-shadow: 0 0 0.75rem rgba(222, 116, 145, 0.72), 0.18rem 0.18rem 0 rgba(27, 21, 24, 0.92), 0.34rem 0.34rem 0 rgba(127, 60, 81, 0.32);
+}
+
+.text-effect {
+  color: #fff;
+  font-weight: 850;
+  -webkit-text-stroke: 0.8px rgba(28, 22, 25, 0.94);
+  text-shadow: 0 0 0.45rem rgba(222, 116, 145, 0.68), 0.1rem 0.1rem 0 rgba(28, 22, 25, 0.82);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--color-sakura-700);
+  font-size: clamp(0.62rem, 1.2vmin, 0.78rem);
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.section-title {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 2.2vmin, 1.55rem);
+  line-height: 1.1;
+}
+
+.section-copy {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: clamp(0.7rem, 1.3vmin, 0.86rem);
+  line-height: 1.45;
+}
+
+/* Compatibility Surface | Older wrappers keep the new paper treatment. */
+.glass-panel {
+  border: 1px solid var(--paper-border);
+  border-radius: var(--radius-large);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 249, 246, 0.7)),
+    repeating-linear-gradient(8deg, rgba(93, 73, 81, 0.02) 0 1px, transparent 1px 5px);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(10px) saturate(0.95);
+}
+
+.internal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-sakura-300) rgba(255, 255, 255, 0.35);
+}
+
+.internal-scroll::-webkit-scrollbar {
+  inline-size: 0.6rem;
+  block-size: 0.6rem;
+}
+
+.internal-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--color-sakura-300);
+  background-clip: padding-box;
+}
+
+.internal-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+/* Route and Modal Motion | Restrained transitions. */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity var(--motion-standard) ease, transform var(--motion-standard) ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(0.35rem);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-0.2rem);
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity var(--motion-standard) ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* Equipped Cosmetics | Server-owned selections become local design tokens. */
+:root {
+  --sudoku-grid-color: #2d292c;
+  --sudoku-board-background: rgba(213, 211, 212, 0.98);
+  --sudoku-cell-fixed: rgba(237, 235, 236, 0.98);
+  --sudoku-cell-editable: rgba(255, 255, 255, 0.97);
+  --sudoku-cell-related: rgba(249, 229, 235, 0.98);
+  --sudoku-cell-matching: rgba(244, 195, 208, 0.99);
+  --sudoku-cell-highlighted: rgba(255, 249, 207, 0.99);
+  --sudoku-number-color: #050505;
+  --sudoku-number-font: inherit;
+  --sudoku-control-background: rgba(255, 253, 249, 0.92);
+  --sudoku-control-active: var(--color-sakura-100);
+  --sudoku-control-border: rgba(68, 57, 62, 0.62);
+  --sudoku-control-shadow: rgba(127, 60, 81, 0.42);
+}
+
+:root[data-sudoku-board-theme='rose-grid'] {
+  --sudoku-board-background: #d99bae;
+  --sudoku-cell-fixed: #edc8d3;
+  --sudoku-cell-editable: #fff1f5;
+  --sudoku-cell-related: #f4c0cf;
+  --sudoku-cell-matching: #eaa5b8;
+  --sudoku-grid-color: #7d3e52;
+}
+
+:root[data-sudoku-board-theme='midnight-ink'] {
+  --sudoku-board-background: #17151d;
+  --sudoku-cell-fixed: #2d2936;
+  --sudoku-cell-editable: #3a3544;
+  --sudoku-cell-related: #4b4055;
+  --sudoku-cell-matching: #704e66;
+  --sudoku-grid-color: #efe4eb;
+  --sudoku-number-color: #fff7fb;
+}
+
+:root[data-sudoku-board-theme='jade-board'] {
+  --sudoku-board-background: #74978d;
+  --sudoku-cell-fixed: #b7d2c9;
+  --sudoku-cell-editable: #e5f2ee;
+  --sudoku-cell-related: #c8e2da;
+  --sudoku-cell-matching: #9fc8bb;
+  --sudoku-grid-color: #254c43;
+}
+
+:root[data-sudoku-board-theme='lantern-gold'] {
+  --sudoku-board-background: #bd9350;
+  --sudoku-cell-fixed: #ead6a9;
+  --sudoku-cell-editable: #fff6de;
+  --sudoku-cell-related: #f5e3b9;
+  --sudoku-cell-matching: #e6c77f;
+  --sudoku-grid-color: #5c3c0f;
+}
+
+:root[data-sudoku-number-style='brush-script'] {
+  --sudoku-number-font: Georgia, 'Times New Roman', serif;
+}
+
+:root[data-sudoku-number-style='rounded-mochi'] {
+  --sudoku-number-font: 'Trebuchet MS', 'Arial Rounded MT Bold', sans-serif;
+}
+
+:root[data-sudoku-number-style='mono-temple'] {
+  --sudoku-number-font: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+:root[data-sudoku-control-theme='moon-controls'] {
+  --sudoku-control-background: rgba(78, 67, 96, 0.94);
+  --sudoku-control-active: #b8a3dc;
+  --sudoku-control-border: #332c42;
+  --sudoku-control-shadow: rgba(57, 43, 76, 0.7);
+}
+
+:root[data-sudoku-control-theme='jade-controls'] {
+  --sudoku-control-background: rgba(176, 213, 202, 0.95);
+  --sudoku-control-active: #87b5a8;
+  --sudoku-control-border: #335e54;
+  --sudoku-control-shadow: rgba(52, 93, 82, 0.5);
+}
+
+:root[data-sudoku-completion-effect='lantern-spark'] .end-ceremony {
+  animation: completion-lantern 900ms ease-out both;
+}
+
+:root[data-sudoku-completion-effect='ink-ripple'] .end-ceremony {
+  animation: completion-ink 850ms ease-out both;
+}
+
+:root[data-sudoku-completion-effect='koi-wave'] .end-ceremony {
+  animation: completion-koi 950ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes completion-lantern {
+  0% { opacity: 0; transform: translateY(1rem) scale(0.96); filter: brightness(1.7); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes completion-ink {
+  0% { opacity: 0; transform: scale(0.84); filter: grayscale(1) blur(6px); }
+  100% { opacity: 1; transform: scale(1); filter: grayscale(0) blur(0); }
+}
+
+@keyframes completion-koi {
+  0% { opacity: 0; transform: translateX(-1.4rem) rotate(-1deg); }
+  55% { opacity: 1; transform: translateX(0.35rem) rotate(0.4deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
